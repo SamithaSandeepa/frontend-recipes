@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Shield, Lock } from "lucide-react";
+import { Shield } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

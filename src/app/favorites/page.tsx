@@ -2,13 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
 import { useRecipes } from "@/contexts/RecipeContext";
 import Header from "@/components/Header";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Loading from "@/components/Loading";
 import RecipeModal from "@/components/RecipeModal";
 import { Heart, Trash2, Grid, List, Search, Calendar } from "lucide-react";
+import Image from "next/image";
+
+interface FavoriteRecipe {
+  recipeId: string;
+  recipeName: string;
+  recipeImage: string;
+  category: string;
+  addedAt: Date;
+}
+
+interface Recipe {
+  idMeal: string;
+  strMeal: string;
+  strMealThumb: string;
+  strCategory?: string;
+  strArea?: string;
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -32,6 +48,14 @@ const itemVariants = {
   },
 };
 
+interface FavoriteItem {
+  recipeId: string;
+  recipeName: string;
+  recipeImage: string;
+  category: string;
+  addedAt: Date;
+}
+
 interface Recipe {
   idMeal: string;
   strMeal: string;
@@ -41,7 +65,6 @@ interface Recipe {
 }
 
 export default function FavoritesPage() {
-  const { user } = useAuth();
   const { favorites, loadingFavorites, fetchFavorites, removeFromFavorites } =
     useRecipes();
 
@@ -53,9 +76,9 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     fetchFavorites();
-  }, []);
+  }, [fetchFavorites]);
 
-  const handleViewDetails = (favorite: any) => {
+  const handleViewDetails = (favorite: FavoriteItem) => {
     const recipe: Recipe = {
       idMeal: favorite.recipeId,
       strMeal: favorite.recipeName,
@@ -75,7 +98,7 @@ export default function FavoritesPage() {
   };
 
   const getFilteredAndSortedFavorites = () => {
-    let filtered = favorites.filter(
+    const filtered = favorites.filter(
       (favorite) =>
         favorite.recipeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         favorite.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -98,7 +121,7 @@ export default function FavoritesPage() {
   };
 
   const groupByCategory = () => {
-    const grouped: Record<string, any[]> = {};
+    const grouped: Record<string, FavoriteRecipe[]> = {};
     getFilteredAndSortedFavorites().forEach((favorite) => {
       if (!grouped[favorite.category]) {
         grouped[favorite.category] = [];
@@ -264,14 +287,22 @@ export default function FavoritesPage() {
                           className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group"
                         >
                           <div className="relative">
-                            <motion.img
-                              src={favorite.recipeImage}
-                              alt={favorite.recipeName}
-                              className="w-full h-48 object-cover cursor-pointer"
+                            <motion.div
                               whileHover={{ scale: 1.05 }}
                               transition={{ duration: 0.3 }}
                               onClick={() => handleViewDetails(favorite)}
-                            />
+                              className="relative w-full h-48 cursor-pointer"
+                            >
+                              <Image
+                                src={favorite.recipeImage}
+                                alt={favorite.recipeName}
+                                fill
+                                className="object-cover rounded-t-2xl"
+                                sizes="(max-width: 768px) 100vw,
+           (max-width: 1200px) 50vw,
+           25vw"
+                              />
+                            </motion.div>
 
                             {/* Remove Button */}
                             <motion.button
@@ -347,11 +378,14 @@ export default function FavoritesPage() {
                                   whileHover={{ x: 8 }}
                                   onClick={() => handleViewDetails(favorite)}
                                 >
-                                  <img
-                                    src={favorite.recipeImage}
-                                    alt={favorite.recipeName}
-                                    className="w-20 h-20 object-cover"
-                                  />
+                                  <div className="relative w-20 h-20 flex-shrink-0">
+                                    <Image
+                                      src={favorite.recipeImage}
+                                      alt={favorite.recipeName}
+                                      fill
+                                      className="object-cover rounded-l-xl"
+                                    />
+                                  </div>
                                   <div className="flex-1 p-4 flex items-center justify-between">
                                     <div>
                                       <h4 className="font-bold text-gray-800 group-hover:text-orange-600 transition-colors">

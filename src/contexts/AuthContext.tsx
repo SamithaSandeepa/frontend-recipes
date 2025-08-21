@@ -1,14 +1,28 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { authAPI } from "@/lib/api";
 import { toast } from "react-hot-toast";
+
+interface FavoriteRecipe {
+  recipeId: string;
+  recipeName: string;
+  recipeImage: string;
+  category: string;
+  addedAt: Date;
+}
 
 interface User {
   id: string;
   name: string;
   email: string;
-  favoriteRecipes: any[];
+  favoriteRecipes: FavoriteRecipe[];
   lastLogin?: Date;
   createdAt?: Date;
 }
@@ -87,8 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       toast.success("Welcome back!");
       return true;
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Login failed";
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Login failed";
       toast.error(message);
       return false;
     } finally {
@@ -115,8 +129,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       toast.success("Account created successfully!");
       return true;
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Registration failed";
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Registration failed";
       toast.error(message);
       return false;
     } finally {
@@ -133,15 +148,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     toast.success("Logged out successfully");
   };
 
-  const updateUser = (userData: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+  const updateUser = useCallback(
+    (userData: Partial<User>) => {
+      if (user) {
+        const updatedUser = { ...user, ...userData };
+        setUser(updatedUser);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
       }
-    }
-  };
+    },
+    [user]
+  );
 
   const value = {
     user,

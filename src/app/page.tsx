@@ -20,6 +20,7 @@ import ClientOnly from "@/components/ClientOnly";
 import RecipeCard from "@/components/RecipeCard";
 import RecipeModal from "@/components/RecipeModal";
 import Loading, { LoadingSkeleton } from "@/components/Loading";
+import Image from "next/image";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -52,7 +53,7 @@ interface Recipe {
 }
 
 export default function HomePage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     featuredRecipes,
     loadingFeatured,
@@ -62,7 +63,6 @@ export default function HomePage() {
     fetchCategories,
     randomRecipe,
     fetchRandomRecipe,
-    loadingRandomRecipe,
     isFavorite,
   } = useRecipes();
 
@@ -74,7 +74,7 @@ export default function HomePage() {
     fetchFeaturedRecipes();
     fetchCategories();
     fetchRandomRecipe();
-  }, []);
+  }, [fetchFeaturedRecipes, fetchCategories, fetchRandomRecipe]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,11 +287,21 @@ export default function HomePage() {
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className="relative overflow-hidden">
-                          <motion.img
-                            src={category.strCategoryThumb}
-                            alt={category.strCategory}
-                            className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
+                          <motion.div
+                            className="relative w-full h-32 overflow-hidden"
+                            whileHover={{ scale: 1.02 }}
+                          >
+                            <Image
+                              src={category.strCategoryThumb}
+                              alt={category.strCategory}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-300"
+                              sizes="(max-width: 768px) 100vw,
+           (max-width: 1280px) 33vw,
+           20vw"
+                            />
+                          </motion.div>
+
                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
                         <div className="p-4">
@@ -343,11 +353,17 @@ export default function HomePage() {
               >
                 <div className="md:flex">
                   <div className="md:w-1/2">
-                    <img
-                      src={randomRecipe.image}
-                      alt={randomRecipe.name}
-                      className="w-full h-64 md:h-full object-cover"
-                    />
+                    <div className="relative w-full h-64 md:h-[420px]">
+                      <Image
+                        src={randomRecipe.image}
+                        alt={randomRecipe.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw,
+             (max-width: 1280px) 50vw,
+             50vw"
+                      />
+                    </div>
                   </div>
                   <div className="md:w-1/2 p-8">
                     <div className="flex items-center mb-4">

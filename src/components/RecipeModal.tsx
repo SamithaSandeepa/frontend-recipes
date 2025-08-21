@@ -14,19 +14,6 @@ interface Recipe {
   strArea?: string;
 }
 
-interface DetailedRecipe {
-  id: string;
-  name: string;
-  category: string;
-  area: string;
-  instructions: string;
-  image: string;
-  tags: string[];
-  ingredients: Array<{ name: string; measurement: string }>;
-  youtubeUrl?: string;
-  sourceUrl?: string;
-}
-
 interface RecipeModalProps {
   isOpen: boolean;
   onClose: () => void;

@@ -1,9 +1,16 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { recipeAPI, userAPI } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { useAuth } from "./AuthContext";
+
+interface Category {
+  idCategory: string;
+  strCategory: string;
+  strCategoryThumb: string;
+  strCategoryDescription?: string;
+}
 
 interface Recipe {
   idMeal: string;
@@ -40,7 +47,7 @@ interface FavoriteRecipe {
 
 interface RecipeContextType {
   // Categories
-  categories: any[];
+  categories: Category[];
   loadingCategories: boolean;
   fetchCategories: () => Promise<void>;
 
@@ -94,7 +101,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user, updateUser } = useAuth();
 
   // State
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
   const [recipesByCategory, setRecipesByCategory] = useState<
@@ -122,21 +129,21 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   // Categories
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoadingCategories(true);
       const response = await recipeAPI.getCategories();
       setCategories(response.data.categories);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Failed to fetch categories");
       console.error("Categories fetch error:", error);
     } finally {
       setLoadingCategories(false);
     }
-  };
+  }, []);
 
   // Recipes by category
-  const fetchRecipesByCategory = async (category: string) => {
+  const fetchRecipesByCategory = useCallback(async (category: string) => {
     try {
       setLoadingRecipes(true);
       const response = await recipeAPI.getRecipesByCategory(category);
@@ -144,22 +151,23 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         ...prev,
         [category]: response.data.recipes,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(`Failed to fetch ${category} recipes`);
       console.error("Recipes by category fetch error:", error);
     } finally {
       setLoadingRecipes(false);
     }
-  };
+  }, []);
 
   // Search recipes
-  const searchRecipes = async (searchTerm: string) => {
+  const searchRecipes = useCallback(async (searchTerm: string) => {
     try {
       setLoadingSearch(true);
       const response = await recipeAPI.searchRecipes(searchTerm);
       setSearchResults(response.data.recipes || []);
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { status?: number } };
+      if (apiError.response?.status === 404) {
         setSearchResults([]);
         toast.error("No recipes found for your search");
       } else {
@@ -169,131 +177,146 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setLoadingSearch(false);
     }
-  };
+  }, []);
 
   // Recipe details
-  const fetchRecipeDetails = async (id: string) => {
+  const fetchRecipeDetails = useCallback(async (id: string) => {
     try {
       setLoadingRecipeDetails(true);
       const response = await recipeAPI.getRecipeDetails(id);
       setSelectedRecipe(response.data.recipe);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Failed to fetch recipe details");
       console.error("Recipe details fetch error:", error);
     } finally {
       setLoadingRecipeDetails(false);
     }
-  };
+  }, []);
 
   // Random recipe
-  const fetchRandomRecipe = async () => {
+  const fetchRandomRecipe = useCallback(async () => {
     try {
       setLoadingRandomRecipe(true);
       const response = await recipeAPI.getRandomRecipe();
       setRandomRecipe(response.data.recipe);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Failed to fetch random recipe");
       console.error("Random recipe fetch error:", error);
     } finally {
       setLoadingRandomRecipe(false);
     }
-  };
+  }, []);
 
   // Featured recipes
-  const fetchFeaturedRecipes = async () => {
+  const fetchFeaturedRecipes = useCallback(async () => {
     try {
       setLoadingFeatured(true);
       const response = await recipeAPI.getFeaturedRecipes();
       setFeaturedRecipes(response.data.featured);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Failed to fetch featured recipes");
       console.error("Featured recipes fetch error:", error);
     } finally {
       setLoadingFeatured(false);
     }
-  };
+  }, []);
 
   // Favorites
-  const fetchFavorites = async () => {
+  const fetchFavorites = useCallback(async () => {
     if (!user) return;
 
     try {
       setLoadingFavorites(true);
       const response = await userAPI.getFavorites();
       setFavorites(response.data.favorites);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Favorites fetch error:", error);
     } finally {
       setLoadingFavorites(false);
     }
-  };
+  }, [user]);
 
-  const addToFavorites = async (recipe: Recipe) => {
-    if (!user) {
-      toast.error("Please login to add favorites");
-      return;
-    }
-
-    try {
-      const favoriteData = {
-        recipeId: recipe.idMeal,
-        recipeName: recipe.strMeal,
-        recipeImage: recipe.strMealThumb,
-        category: recipe.strCategory || "Unknown",
-      };
-
-      await userAPI.addToFavorites(favoriteData);
-
-      const newFavorite: FavoriteRecipe = {
-        ...favoriteData,
-        addedAt: new Date(),
-      };
-
-      setFavorites((prev) => [newFavorite, ...prev]);
-
-      // Update user context
-      if (user) {
-        updateUser({
-          favoriteRecipes: [newFavorite, ...user.favoriteRecipes],
-        });
+  const addToFavorites = useCallback(
+    async (recipe: Recipe) => {
+      if (!user) {
+        toast.error("Please login to add favorites");
+        return;
       }
 
-      toast.success("Added to favorites!");
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Failed to add to favorites";
-      toast.error(message);
-    }
-  };
+      try {
+        const favoriteData = {
+          recipeId: recipe.idMeal,
+          recipeName: recipe.strMeal,
+          recipeImage: recipe.strMealThumb,
+          category: recipe.strCategory || "Unknown",
+        };
 
-  const removeFromFavorites = async (recipeId: string) => {
-    if (!user) return;
+        await userAPI.addToFavorites(favoriteData);
 
-    try {
-      await userAPI.removeFromFavorites(recipeId);
+        const newFavorite: FavoriteRecipe = {
+          ...favoriteData,
+          addedAt: new Date(),
+        };
 
-      setFavorites((prev) => prev.filter((fav) => fav.recipeId !== recipeId));
+        setFavorites((prev) => [newFavorite, ...prev]);
 
-      // Update user context
-      if (user) {
-        updateUser({
-          favoriteRecipes: user.favoriteRecipes.filter(
-            (fav) => fav.recipeId !== recipeId
-          ),
-        });
+        // Update user context
+        if (user) {
+          updateUser({
+            favoriteRecipes: [newFavorite, ...user.favoriteRecipes],
+          });
+        }
+
+        toast.success("Added to favorites!");
+      } catch (error: unknown) {
+        const apiError = error as {
+          response?: { data?: { message?: string } };
+        };
+        const message =
+          apiError.response?.data?.message || "Failed to add to favorites";
+        toast.error(message);
       }
+    },
+    [user, updateUser]
+  );
 
-      toast.success("Removed from favorites");
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Failed to remove from favorites";
-      toast.error(message);
-    }
-  };
+  const removeFromFavorites = useCallback(
+    async (recipeId: string) => {
+      if (!user) return;
 
-  const isFavorite = (recipeId: string): boolean => {
-    return favorites.some((fav) => fav.recipeId === recipeId);
-  };
+      try {
+        await userAPI.removeFromFavorites(recipeId);
+
+        setFavorites((prev) => prev.filter((fav) => fav.recipeId !== recipeId));
+
+        // Update user context
+        if (user) {
+          updateUser({
+            favoriteRecipes: user.favoriteRecipes.filter(
+              (fav) => fav.recipeId !== recipeId
+            ),
+          });
+        }
+
+        toast.success("Removed from favorites");
+      } catch (error: unknown) {
+        const apiError = error as {
+          response?: { data?: { message?: string } };
+        };
+        const message =
+          apiError.response?.data?.message || "Failed to remove from favorites";
+        toast.error(message);
+      }
+    },
+    [user, updateUser]
+  );
+
+  const isFavorite = useCallback(
+    (recipeId: string): boolean => {
+      return favorites.some((fav) => fav.recipeId === recipeId);
+    },
+    [favorites]
+  );
 
   const value = {
     categories,

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Heart, Star, Clock, Users } from "lucide-react";
+import { Heart, Star, Clock } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecipes } from "@/contexts/RecipeContext";
