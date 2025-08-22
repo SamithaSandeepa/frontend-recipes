@@ -1,14 +1,15 @@
 import axios from "axios";
-
+const isBrowser = typeof window !== "undefined";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 // Create axios instance
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: isBrowser
+    ? "/api"
+    : process.env.API_INTERNAL_BASE_URL || "http://62.146.182.119:4003/api",
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
 });
 
 // Request interceptor to add auth token
