@@ -27,19 +27,19 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.2,
+      delayChildren: 0.1,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 50, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
     transition: {
       duration: 0.6,
-      ease: [0.4, 0.0, 0.2, 1] as const,
     },
   },
 };
@@ -212,10 +212,10 @@ export default function HomePage() {
         {/* Featured Recipes */}
         <motion.section
           className="py-16 px-4"
-          variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.2 }}
+          variants={containerVariants}
         >
           <div className="max-w-7xl mx-auto">
             <motion.div variants={itemVariants} className="text-center mb-12">
@@ -232,10 +232,18 @@ export default function HomePage() {
             ) : (
               <motion.div
                 variants={containerVariants}
+                initial="hidden"
+                animate="visible"
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
               >
-                {getFeaturedRecipesList().map((recipe) => (
-                  <motion.div key={recipe.idMeal} variants={itemVariants}>
+                {getFeaturedRecipesList().map((recipe, index) => (
+                  <motion.div 
+                    key={recipe.idMeal} 
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.1 }}
+                  >
                     <RecipeCard
                       recipe={recipe}
                       onViewDetails={handleViewDetails}
@@ -251,10 +259,10 @@ export default function HomePage() {
         {/* Featured Categories */}
         <motion.section
           className="py-16 px-4 bg-white/50"
-          variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.2 }}
+          variants={containerVariants}
         >
           <div className="max-w-7xl mx-auto">
             <motion.div variants={itemVariants} className="text-center mb-12">
@@ -274,10 +282,18 @@ export default function HomePage() {
             ) : (
               <motion.div
                 variants={containerVariants}
+                initial="hidden"
+                animate="visible"
                 className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"
               >
-                {categories.slice(0, 5).map((category) => (
-                  <motion.div key={category.idCategory} variants={itemVariants}>
+                {categories.slice(0, 5).map((category, index) => (
+                  <motion.div 
+                    key={category.idCategory} 
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.1 }}
+                  >
                     <Link
                       href={`/categories/${category.strCategory.toLowerCase()}`}
                     >
@@ -332,10 +348,10 @@ export default function HomePage() {
         {randomRecipe && (
           <motion.section
             className="py-16 px-4"
-            variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.2 }}
+            variants={containerVariants}
           >
             <div className="max-w-4xl mx-auto">
               <motion.div variants={itemVariants} className="text-center mb-8">
@@ -349,6 +365,8 @@ export default function HomePage() {
 
               <motion.div
                 variants={itemVariants}
+                initial="hidden"
+                animate="visible"
                 className="bg-white rounded-2xl shadow-xl overflow-hidden"
               >
                 <div className="md:flex">
